@@ -1,6 +1,6 @@
 ﻿using VRage.Utils;
 
-namespace ProgramableLootBox
+namespace AutoLootBox
 {
     public static class Log
     {

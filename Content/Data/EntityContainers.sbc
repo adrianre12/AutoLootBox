@@ -12,5 +12,25 @@
             </DefaultComponents>
         </Container>
 
+		<Container>
+			<Id>
+				<TypeId>TerminalBlock</TypeId>
+				<SubtypeId>AutoFreight2</SubtypeId>
+			</Id>
+			<DefaultComponents>
+				<Component BuilderType="MyObjectBuilder_Inventory" SubtypeId="Freight1" ForceCreate="true"/>
+			</DefaultComponents>
+		</Container>
+
+		<Container>
+			<Id>
+				<TypeId>TerminalBlock</TypeId>
+				<SubtypeId>AutoFreight3</SubtypeId>
+			</Id>
+			<DefaultComponents>
+				<Component BuilderType="MyObjectBuilder_Inventory" SubtypeId="Freight1" ForceCreate="true"/>
+			</DefaultComponents>
+		</Container>
+
     </EntityContainers>
 </Definitions>
