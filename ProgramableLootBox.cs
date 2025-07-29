@@ -1,5 +1,8 @@
-﻿using Sandbox.Common.ObjectBuilders;
+﻿using EmptyKeys.UserInterface.Generated.AtmBlockView_Bindings;
+using Sandbox.Common.ObjectBuilders;
 using Sandbox.Common.ObjectBuilders.Definitions;
+using Sandbox.Game;
+using Sandbox.Game.Gui;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
@@ -21,42 +24,99 @@ namespace ProgramableLootBox
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_TerminalBlock), false, new[] { "AutoFreight1" })]
     internal class ProgramableLootBox : MyGameLogicComponent
     {
-        private IMyCubeBlock block;
+        const int DefaultShowInTerminalPeriod = 3600; //5 * 3600; //ticks
+        const int DefaultRefreshPeriod = 2; //20; //mins
+
+        public static Random GlobalRandom = new Random();
+
+        private IMyTerminalBlock block;
+        private bool once;
+        private int refreshPeriod = DefaultRefreshPeriod * 3600; //ticks
+        private int showInTerminalExpiary = int.MaxValue; //ticks
+        private int refreshAfterFrame;
+        private bool programming;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            MyLog.Default.WriteLine("BoxInit...");
+            Log.Msg("Init...");
 
             if (!MyAPIGateway.Session.IsServer)
                 return;
 
-            block = Entity as IMyCubeBlock;
+            block = Entity as IMyTerminalBlock;
 
+            NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+        }
+
+        public override void UpdateOnceBeforeFrame()
+        {
+            base.UpdateOnceBeforeFrame();
+
+            block.ShowInTerminal = false;
+            block.ShowInInventory = false;
+            block.ShowInToolbarConfig = false;
+            block.ShowOnHUD = false;
+
+            LoadInventory();
+
+            refreshAfterFrame = (int)(MyAPIGateway.Session.GameplayFrameCounter + refreshPeriod * (GlobalRandom.NextDouble()) + 1);
             NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
         }
 
         public override void UpdateAfterSimulation100()
         {
-            Log.Msg($"Tick {block.CubeGrid.DisplayName}");
+            var currentFrame = MyAPIGateway.Session.GameplayFrameCounter;
+            Log.Msg($"Tick {block.CubeGrid.DisplayName} frame={currentFrame}, termExpiry={showInTerminalExpiary} refresh={refreshAfterFrame}");
 
-            IMyInventory inv = block.GetInventory();
-            MyDefinitionId id = new MyDefinitionId(typeof(MyObjectBuilder_Datapad), "Datapad");
-            var item = inv.FindItem(id);
-            if (item != null)
+            if (block.ShowInTerminal)
             {
-                var datapad = item.Content as MyObjectBuilder_Datapad;
-                Log.Msg($"Datapad found {datapad.Name} {datapad.Data} {datapad.GetId().ToString()}");
-                
+                Log.Msg("Programming");
+                if (!programming)
+                {
+                    programming = true;
+                    LoadInventory();
+
+                    showInTerminalExpiary = currentFrame + DefaultShowInTerminalPeriod;
+                    return;
+                }
+                if (showInTerminalExpiary > currentFrame)
+                    return;
             }
-            else
+
+            if (programming)
             {
+                Log.Msg("End Programming");
 
-                MyObjectBuilder_Datapad datapadObj = MyObjectBuilderSerializer.CreateNewObject(id) as MyObjectBuilder_Datapad;
-                datapadObj.Name = "A Name";
-                datapadObj.Data = "Some Data";
+                programming = false;
+                block.ShowInTerminal = false;
+                refreshAfterFrame = currentFrame + refreshPeriod;
 
-                inv.AddItems(1, datapadObj);
+                StoreInventory();
             }
+
+            if (currentFrame < refreshAfterFrame)
+                return;
+
+            refreshAfterFrame = currentFrame + refreshPeriod;
+            Log.Msg("Refresh");
+
+            LoadInventory();
         }
+        private void LoadInventory()
+        {
+            Log.Msg("Loading Inventory");
+            MyInventory myinv = (MyInventory)block.GetInventory();
+
+            var invbuilder = MyAPIGateway.Utilities.SerializeFromXML<MyObjectBuilder_Inventory>(block.CustomData);
+            myinv.Clear();
+            myinv.Init(invbuilder);
+        }
+        private void StoreInventory()
+        {
+            Log.Msg("Storing Inventory");
+            MyInventory myinv = (MyInventory)block.GetInventory();
+            block.CustomData = MyAPIGateway.Utilities.SerializeToXML(myinv.GetObjectBuilder());
+        }
+
     }
 }
