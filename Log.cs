@@ -4,7 +4,7 @@ namespace AutoLootBox
 {
     public static class Log
     {
-        const string Prefix = "ProgLootBox";
+        const string Prefix = "AutoLootBox";
 
         public static bool DebugLog;
         public static void Msg(string msg)

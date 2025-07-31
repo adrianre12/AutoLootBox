@@ -61,7 +61,7 @@ namespace AutoLootBox
 
             LoadConfigFromCD();
 
-            refreshAfterFrame = (int)(MyAPIGateway.Session.GameplayFrameCounter + refreshPeriod * 3600 * (GlobalRandom.NextDouble()) + 1);
+            refreshAfterFrame = (int)(MyAPIGateway.Session.GameplayFrameCounter + refreshPeriod * 1800 * (GlobalRandom.NextDouble() + 1));
             NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
         }
 
@@ -98,8 +98,15 @@ namespace AutoLootBox
             if (currentFrame < refreshAfterFrame)
                 return;
 
-            refreshAfterFrame = currentFrame + refreshPeriod * 3600;
-            //Log.Msg("Refresh");
+            //Log.Msg($"Refresh elapsed={(currentFrame - refreshAfterFrame)/60} frame={currentFrame}, refresh={refreshAfterFrame}");
+            if (currentFrame - refreshAfterFrame > 1800)
+            {
+                refreshAfterFrame = (int)(currentFrame + refreshPeriod * 1800 * (GlobalRandom.NextDouble() + 1));
+            }
+            else
+            {
+                refreshAfterFrame = currentFrame + refreshPeriod * 3600;
+            }
 
             LoadConfigFromCD();
         }
