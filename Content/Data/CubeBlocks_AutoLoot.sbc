@@ -6,7 +6,6 @@
 				<TypeId>TerminalBlock</TypeId>
 				<SubtypeId>AutoFreight1</SubtypeId>
 			</Id>
-			<!--<DisplayName>DisplayName_Block_Freight1</DisplayName>-->
 			<DisplayName>Auto Freight 1</DisplayName>
 			<Icon>Textures\GUI\Icons\Cubes\Freight_I.dds</Icon>
 			<Description>Description_Freight</Description>
